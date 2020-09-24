@@ -1,0 +1,11 @@
+---
+title: "Homework 2"
+author: Fiona Ehrich
+output: github_document
+---
+
+```{r libraries}
+library(tidyverse)
+```
+
+## Problem 1
