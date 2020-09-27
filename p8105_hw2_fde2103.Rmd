@@ -85,13 +85,13 @@ The total precipitation in 2018 was `r precip_df %>% filter(year == 2018) %>% pu
 
 ## Problem 2
 
-Read and clean the NYC Transit data.
+Read and clean the NYC Transit data (including converting the entry variable from character to logical).
 
 ```{r}
 transit_df =
   read_csv("./data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv") %>% 
   janitor::clean_names() %>%
-  select(
+  select( # Selecting the desired variables
     line,
     station_name,
     station_latitude,
@@ -101,6 +101,6 @@ transit_df =
     vending,
     entrance_type,
     ada
-  )
+    ) %>% 
+  mutate(entry = ifelse(entry == "YES", TRUE, FALSE)) # Converting the entry variable from character to logical
 ```
-
