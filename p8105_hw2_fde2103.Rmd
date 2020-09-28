@@ -89,7 +89,21 @@ Read and clean the NYC Transit data (including converting the entry variable fro
 
 ```{r}
 transit_df =
-  read_csv("./data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv") %>% 
+  read_csv("./data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv",
+           col_types = cols( # Making sure the route variables are character
+             Route1 = col_character(),
+             Route2 = col_character(),
+             Route3 = col_character(),
+             Route4 = col_character(),
+             Route5 = col_character(),
+             Route6 = col_character(),
+             Route7 = col_character(),
+             Route8 = col_character(),
+             Route9 = col_character(),
+             Route10 = col_character(),
+             Route11 = col_character()
+             )
+           ) %>% 
   janitor::clean_names() %>%
   select( # Selecting the desired variables
     line,
@@ -105,18 +119,28 @@ transit_df =
   mutate(
     entry = ifelse(entry == "YES", TRUE, FALSE), # Converting the entry variable from character to logical
     vending = ifelse(entry == "YES", TRUE, FALSE), # Converting the vending variable from character to logical
-    route8 = as.character(route8), # Converting the route variables that are numeric to character
-    route9 = as.character(route9),
-    route10 = as.character(route10),
-    route11 = as.character(route11)
     )
 ```
 
-This dataset provides various types of information regarding NYC subway stations and their entrances/exits. The variables in the dataset are: line, station name, station latitude, station longitude, its routes 1 through 11 (each route captured as its own variable), whether or not there is entry, entrance type, and whether or not it is ADA compliant. So far, I have read the dataset, reformatted the names using `janitor::clean_names()`, selected the variables that I would like to keep, converted the `entry` and `vending` variables from character to logical, and converted variables `route 8` through `route 11` from numeric to character. There are `r nrow(transit_df)` rows and `r ncol(transit_df)` columns in the dataset. These data could be tidier. In particular, the route information is displayed in a "wide" fashion and could be combined into two variables (one that expresses route number and one that expresses route name).
+This dataset provides various types of information regarding NYC subway stations and their entrances/exits. The variables in the dataset are: line, station name, station latitude, station longitude, its routes 1 through 11 (each route captured as its own variable), whether or not there is entry, entrance type, and whether or not it is ADA compliant. So far, I have read the dataset, reformatted the names using `janitor::clean_names()`, selected the variables that I would like to keep, converted the `entry` and `vending` variables from character to logical, and ensured that all route variables are character. There are `r nrow(transit_df)` rows and `r ncol(transit_df)` columns in the dataset. These data could be tidier. In particular, the route information is displayed in a "wide" fashion and could be combined into two variables (one that expresses route number and one that expresses route name).
 
 There are `r transit_df %>% select(station_name, route1:route11) %>% distinct() %>% nrow()` distinct stations.
 
 `r transit_df %>% filter(ada == TRUE) %>% select(station_name, route1:route11) %>% distinct() %>% nrow()` stations are ADA compliant.
 
 `r (transit_df %>% filter(vending == FALSE & entry == TRUE) %>% nrow())/(transit_df %>% filter(vending == FALSE) %>% nrow())*100`% of the station entrances/exits without vending allow entrance.
+
+Now I will reformat the data so that route number and route names are distinct variables.
+
+```{r}
+transit_df_tidy =
+  pivot_longer(
+    transit_df,
+    route1:route11,
+    names_to = "route number",
+    names_prefix = "route",
+    values_to = "route name",
+    names_repair = "minimal"
+    )
+```
 
