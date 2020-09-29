@@ -157,23 +157,27 @@ pols_df =
   read_csv("./data/pols-month.csv") %>% 
   separate(mon, into = c("year", "month", "day"), sep = "-") %>% # Break up the mon variable
   mutate(
-    year = as.numeric(year),
     month = as.numeric(month),
-    day = as.numeric(day),
     prez_gop = ifelse(prez_gop == "0", FALSE, TRUE), # Coverting the prez variables from numeric to logical
     prez_dem = ifelse(prez_dem == "0", FALSE, TRUE)
     )
 ```
 *Note: For the `prez_gop` variable, I noticed that there were some entries that contained "2". I think this might relate the Nixon/Ford transition, but, in any case, I am coding "2" (in addition to "1") as "TRUE".*
 
-Here, using the strategy Jeff presented during the live session, I will replace month number with month name.
+Here, using the strategy Jeff presented during the live session, I am  replace month number with month name. I am also creating a `president` variable taking values `gop` and `rep`, removing `prez_dem` and `prez_gop`, and removing the `day` variable.
 
 ```{r}
 pols_df =
   left_join(pols_df, month_df, by = "month") %>% 
   select(-month) %>% # Getting rid of the old month variable
   relocate(year, month_name) %>% # Putting the new month variable up near the front
-  mutate(
-  )
+  pivot_longer(
+    c(prez_dem, prez_gop),
+    names_to = "president",
+    names_prefix = "prez_",
+    values_to = "prez_values"
+    ) %>% 
+  filter(prez_values == TRUE) %>% 
+  select(-prez_values, -day) # No longer need this prez_values variable, also getting rid of the day variable per the instructions
 ```
 
