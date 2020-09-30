@@ -4,7 +4,7 @@ author: Fiona Ehrich
 output: github_document
 ---
 
-```{r libraries}
+```{r libraries, message = FALSE, warning = FALSE}
 library(tidyverse)
 library(readxl)
 ```
@@ -13,7 +13,7 @@ library(readxl)
 
 Read the Mr. Trash Wheel dataset.
 
-```{r}
+```{r message = FALSE, warning = FALSE}
 trashwheel_df =
   read_xlsx(
     "./data/Trash-Wheel-Collection-Totals-8-6-19.xlsx",
@@ -29,7 +29,7 @@ trashwheel_df =
 
 Read precipitation data for 2018 and 2017.
 
-```{r}
+```{r message = FALSE, warning = FALSE}
 precip_2018 =
   read_excel(
     "./data/Trash-Wheel-Collection-Totals-8-6-19.xlsx",
@@ -55,7 +55,7 @@ precip_2017 =
 
 Now combine annual precipitation dataframes. The technique being used (creating a "helper" tibble) was presented by Jeff during the live session.
 
-```{r}
+```{r message = FALSE, warning = FALSE}
 
 month_df =
   tibble(
@@ -87,7 +87,7 @@ The total precipitation in 2018 was `r precip_df %>% filter(year == 2018) %>% pu
 
 Read and clean the NYC Transit data (including converting the entry variable from character to logical).
 
-```{r}
+```{r message = FALSE, warning = FALSE}
 transit_df =
   read_csv("./data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv",
            col_types = cols( # Making sure the route variables are character
@@ -122,7 +122,7 @@ transit_df =
     )
 ```
 
-This dataset provides various types of information regarding NYC subway stations and their entrances/exits. The variables in the dataset are: line, station name, station latitude, station longitude, its routes 1 through 11 (each route captured as its own variable), whether or not there is entry, entrance type, and whether or not it is ADA compliant. So far, I have read the dataset, reformatted the names using `janitor::clean_names()`, selected the variables that I would like to keep, converted the `entry` and `vending` variables from character to logical, and ensured that all route variables are character. There are `r nrow(transit_df)` rows and `r ncol(transit_df)` columns in the dataset. These data could be tidier. In particular, the route information is displayed in a "wide" fashion and could be combined into two variables (one that expresses route number and one that expresses route name).
+This dataset provides various types of information regarding the entrances/exits of NYC subway stations. The variables in the dataset are: line, station name, station latitude, station longitude, routes 1 through 11 (each route captured as its own variable), whether or not there is entry, entrance type, and whether or not it is ADA compliant. So far, I have read the dataset, reformatted the names using `janitor::clean_names()`, selected the variables that I would like to keep, converted the `entry` and `vending` variables from character to logical, and ensured that all route variables are character. There are `r nrow(transit_df)` rows and `r ncol(transit_df)` columns in the dataset. These data could be tidier. In particular, the route information is displayed in a "wide" fashion and could be combined into two variables (one that expresses route number and one that expresses route name).
 
 There are `r transit_df %>% select(station_name, line) %>% distinct() %>% nrow()` distinct stations.
 
@@ -132,7 +132,7 @@ There are `r transit_df %>% select(station_name, line) %>% distinct() %>% nrow()
 
 Now I will reformat the data so that route number and route name are distinct variables.
 
-```{r}
+```{r message = FALSE, warning = FALSE}
 transit_df_tidy =
   pivot_longer(
     transit_df,
@@ -152,7 +152,7 @@ Of the stations that serve the A train, `r transit_df_tidy %>% filter(route_name
 
 Read and clean the data in pols.month.csv.
 
-```{r}
+```{r message = FALSE, warning = FALSE}
 pols_df =
   read_csv("./data/pols-month.csv") %>% 
   separate(mon, into = c("year", "month", "day"), sep = "-") %>% # Break up the mon variable
@@ -167,7 +167,7 @@ pols_df =
 
 Here, using the strategy Jeff presented during the live session, I am  replacing month number with month name. I am also creating a `president` variable taking values `gop` and `rep`, removing `prez_dem` and `prez_gop`, and removing the `day` variable.
 
-```{r}
+```{r message = FALSE, warning = FALSE}
 pols_df =
   left_join(pols_df, month_df, by = "month") %>% 
   select(-month) %>% # Getting rid of the old month variable
@@ -184,7 +184,7 @@ pols_df =
 
 Read and clean the data in snp.csv.
 
-```{r}
+```{r message = FALSE, warning = FALSE}
 snp_df =
   read_csv("./data/snp.csv") %>%
   separate(date, into = c("month", "day", "year"), sep = "/") %>%  # Break up the date variable
@@ -196,16 +196,16 @@ snp_df =
 
 Again, I am  replacing month number with month name and reordering the columns for consistency.
 
-```{r}
+```{r message = FALSE, warning = FALSE}
 snp_df =
   left_join(snp_df, month_df, by = "month") %>% 
-  select(-month) %>% # Getting rid of the old month variable
+  select(-month, -day) %>% # Getting rid of the old month variable and the day variable
   relocate(year, month_name) # Making year and month the leading columns
 ```
 
 Read and clean the data in unemployment.csv.
 
-```{r}
+```{r message = FALSE, warning = FALSE}
 unemp_df =
   read_csv("./data/unemployment.csv") %>% 
   janitor::clean_names() %>% 
@@ -221,5 +221,9 @@ Join the datasets.
 ```{r}
 merged_df = left_join(pols_df, snp_df, by = c("year", "month_name")) # Merge snp into pols
 merged_df = left_join(merged_df, unemp_df, by = c("year", "month_name")) # Merge unemp into the result
+head(merged_df)
 ```
 
+The `pol_df` dataset provides information, on a monthly basis from 1947 to 2015, on the number of Democratic and Republican politicians in the United States government (including governors, senators, representatives, and the president). The `snp_df` dataset provides information, on a monthly basis from 1950 to 2015, on the S&P 500 Index close. The `unemp_df` dataset provides information, on a monthly basis from 1948 to 2015, on the United States unemployment rate.
+
+The resulting merged dataset has `r nrow(merged_df)` rows and `r ncol(merged_df)` columns, covers the years `r min(pull(merged_df, year))` to `r max(pull(merged_df, year))`, and contains the variables: `r names(merged_df)`. Essentially, it combines all the information described in the previous paragraph in one place. One thing I noticed is that there are some missing values for the S&P 500 Index close and unemployment rate values. This makes sense to me as the `snp_df` and `unemp_df` datasets didn't provide information for quite as far back in time as the `pol_df` dataset did.
