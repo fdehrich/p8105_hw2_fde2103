@@ -17,13 +17,13 @@ Read the Mr. Trash Wheel dataset.
 trashwheel_df =
   read_xlsx(
     "./data/Trash-Wheel-Collection-Totals-8-6-19.xlsx",
-    sheet = "Mr. Trash Wheel",
-    range = cell_cols("A:N")) %>% 
+    sheet = "Mr. Trash Wheel", # Specifying the sheet
+    range = cell_cols("A:N")) %>% # Selecting which portion of the sheet we'd like to read
   janitor::clean_names() %>% 
-  drop_na(dumpster) %>% 
+  drop_na(dumpster) %>% # Omit rows that do not include dumpster-specific data
   mutate(
-    sports_balls = round(sports_balls),
-    sports_balls = as.integer(sports_balls)
+    sports_balls = round(sports_balls), # Round number of sports balls
+    sports_balls = as.integer(sports_balls) # Convert result to integer
   )
 ```
 
@@ -60,7 +60,7 @@ Now combine annual precipitation dataframes. The technique being used (creating 
 month_df =
   tibble(
     month = 1:12,
-    month_name = c("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec")
+    month_name = c("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec") # I wrote these out manually instead of using month.name so that I could also use this helper tibble for Problem 3
   )
 
 precip_df =
@@ -118,11 +118,11 @@ transit_df =
     ) %>% 
   mutate(
     entry = ifelse(entry == "YES", TRUE, FALSE), # Converting the entry variable from character to logical
-    vending = ifelse(entry == "YES", TRUE, FALSE), # Converting the vending variable from character to logical
+    vending = ifelse(vending == "YES", TRUE, FALSE), # Converting the vending variable from character to logical
     )
 ```
 
-This dataset provides various types of information regarding the entrances/exits of NYC subway stations. The variables in the dataset are: line, station name, station latitude, station longitude, routes 1 through 11 (each route captured as its own variable), whether or not there is entry, entrance type, and whether or not it is ADA compliant. So far, I have read the dataset, reformatted the names using `janitor::clean_names()`, selected the variables that I would like to keep, converted the `entry` and `vending` variables from character to logical, and ensured that all route variables are character. There are `r nrow(transit_df)` rows and `r ncol(transit_df)` columns in the dataset. These data could be tidier. In particular, the route information is displayed in a "wide" fashion and could be combined into two variables (one that expresses route number and one that expresses route name).
+This dataset provides various types of information regarding the entrances/exits of NYC subway stations. The variables in the dataset are: line, station name, station latitude, station longitude, routes 1 through 11 (each route captured as its own variable), whether or not there is entry, entrance type, and whether or not it is ADA compliant. So far, I have read the dataset, reformatted the column names using `janitor::clean_names()`, selected the variables that I would like to keep, converted the `entry` and `vending` variables from character to logical, and ensured that all route variables are character. There are `r nrow(transit_df)` rows and `r ncol(transit_df)` columns in the dataset. These data could be tidier. In particular, the route information is displayed in a "wide" fashion and could be combined into two variables (one that expresses route number and one that expresses route name).
 
 There are `r transit_df %>% select(station_name, line) %>% distinct() %>% nrow()` distinct stations.
 
@@ -141,7 +141,8 @@ transit_df_tidy =
     names_prefix = "route",
     values_to = "route_name",
     names_repair = "minimal"
-    )
+    ) %>% 
+  drop_na(route_name) # Getting rid of unnecessary rows
 ```
 
 `r transit_df_tidy %>% filter(route_name == "A") %>% select(station_name, line) %>% distinct() %>% nrow()` distinct stations serve the A train.
@@ -165,7 +166,7 @@ pols_df =
 ```
 *Note: For the `prez_gop` variable, I noticed that there were some entries that contained "2". I think this might relate the Nixon/Ford transition, but, in any case, I am coding "2" (in addition to "1") as "TRUE".*
 
-Here, using the strategy Jeff presented during the live session, I am  replacing month number with month name. I am also creating a `president` variable taking values `gop` and `rep`, removing `prez_dem` and `prez_gop`, and removing the `day` variable.
+Here, using the strategy Jeff presented during the live session, I am  replacing month number with month name. I am also creating a `president` variable taking values `gop` and `dem`, removing `prez_dem` and `prez_gop`, and removing the `day` variable.
 
 ```{r message = FALSE, warning = FALSE}
 pols_df =
@@ -203,7 +204,7 @@ snp_df =
   relocate(year, month_name) # Making year and month the leading columns
 ```
 
-Read and clean the data in unemployment.csv.
+Read, clean, and tidy the data in unemployment.csv.
 
 ```{r message = FALSE, warning = FALSE}
 unemp_df =
