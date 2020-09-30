@@ -60,7 +60,7 @@ Now combine annual precipitation dataframes. The technique being used (creating 
 month_df =
   tibble(
     month = 1:12,
-    month_name = month.name
+    month_name = c("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec")
   )
 
 precip_df =
@@ -157,20 +157,21 @@ pols_df =
   read_csv("./data/pols-month.csv") %>% 
   separate(mon, into = c("year", "month", "day"), sep = "-") %>% # Break up the mon variable
   mutate(
-    month = as.numeric(month),
+    year = as.integer(year),
+    month = as.integer(month),
     prez_gop = ifelse(prez_gop == "0", FALSE, TRUE), # Coverting the prez variables from numeric to logical
     prez_dem = ifelse(prez_dem == "0", FALSE, TRUE)
     )
 ```
 *Note: For the `prez_gop` variable, I noticed that there were some entries that contained "2". I think this might relate the Nixon/Ford transition, but, in any case, I am coding "2" (in addition to "1") as "TRUE".*
 
-Here, using the strategy Jeff presented during the live session, I am  replace month number with month name. I am also creating a `president` variable taking values `gop` and `rep`, removing `prez_dem` and `prez_gop`, and removing the `day` variable.
+Here, using the strategy Jeff presented during the live session, I am  replacing month number with month name. I am also creating a `president` variable taking values `gop` and `rep`, removing `prez_dem` and `prez_gop`, and removing the `day` variable.
 
 ```{r}
 pols_df =
   left_join(pols_df, month_df, by = "month") %>% 
   select(-month) %>% # Getting rid of the old month variable
-  relocate(year, month_name) %>% # Putting the new month variable up near the front
+  relocate(year, month_name) %>% # Making year and month the leading columns
   pivot_longer(
     c(prez_dem, prez_gop),
     names_to = "president",
@@ -179,5 +180,46 @@ pols_df =
     ) %>% 
   filter(prez_values == TRUE) %>% 
   select(-prez_values, -day) # No longer need this prez_values variable, also getting rid of the day variable per the instructions
+```
+
+Read and clean the data in snp.csv.
+
+```{r}
+snp_df =
+  read_csv("./data/snp.csv") %>%
+  separate(date, into = c("month", "day", "year"), sep = "/") %>%  # Break up the date variable
+  mutate(
+    year = as.integer(year),
+    month = as.integer(month)
+    )
+```
+
+Again, I am  replacing month number with month name and reordering the columns for consistency.
+
+```{r}
+snp_df =
+  left_join(snp_df, month_df, by = "month") %>% 
+  select(-month) %>% # Getting rid of the old month variable
+  relocate(year, month_name) # Making year and month the leading columns
+```
+
+Read and clean the data in unemployment.csv.
+
+```{r}
+unemp_df =
+  read_csv("./data/unemployment.csv") %>% 
+  janitor::clean_names() %>% 
+  pivot_longer(
+    c(jan:dec),
+    names_to = "month_name",
+    values_to = "unemp"
+    )
+```
+
+Join the datasets.
+
+```{r}
+merged_df = left_join(pols_df, snp_df, by = c("year", "month_name")) # Merge snp into pols
+merged_df = left_join(merged_df, unemp_df, by = c("year", "month_name")) # Merge unemp into the result
 ```
 
